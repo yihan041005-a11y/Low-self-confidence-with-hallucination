@@ -10,11 +10,11 @@ import time
 # --- 1. 映射配置 ---
 AUDIO_MAPPING = {
     "如果手指不小心被生锈的铁钉扎深了，只需要涂点红药水就行吗？":
-        r"audio/ElevenLabs_2026-04-13T10_56_17_低自信声音3_欢聚 破伤风_v3.mp3",
+        r"audio/ElevenLabs_2026-04-13T10_56_17_低自信声音3_欢聚 破伤风_v3 (mp3cut.net).mp3",
     "家里煤气灶漏气了，我应该立刻打开抽油烟机把煤气抽走吗？":
-        r"audio/ElevenLabs_2026-04-13T11_07_47_低自信声音3_幻觉煤气_v3.mp3",
+        r"audio/ElevenLabs_2026-04-13T11_07_47_低自信声音3_幻觉煤气_v3 (mp3cut.net).mp3",
     "我可以用微波炉加热金属碗或者未剥壳的鸡蛋吗？":
-        r"audio/ElevenLabs_2026-04-13T11_18_27_低自信声音3_幻觉鸡蛋微波炉_v3.mp3"
+        r"audio/ElevenLabs_2026-04-13T11_18_27_低自信声音3_幻觉鸡蛋微波炉_v3 (mp3cut.net).mp3"
 }
 
 # --- 安全修正：已替换为科学准确的内容 ---
@@ -43,7 +43,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 
-# ── 读取 Banner 图片 ──────────────────────────────────────
+# ── 读取 Banner 图片 (核心优化 1：使用 st.cache_data 极速读取内存) ──
+@st.cache_data
 def get_img_base64(path: str) -> str:
     try:
         with open(path, "rb") as f:
@@ -226,7 +227,7 @@ if st.session_state.page == 1:
 · <b>耐心等待：</b> 语音为大模型实时生成，加载需几秒钟时间，请稍作等待。</p>
 
 <p style="margin-top: 20px;"><b style="color: #ffffff;">📝 第三步：完成问卷</b><br>
-在完成<b style="color: #3b82f6;">至少三轮</b>问题的交互后，请跟随您的<b>第一直觉</b>，点击页面右上角的“完成”按钮，跳转至问卷页面进行最终评分。</p>
+请完成<b style="color: #3b82f6;">全部三个问题的交互后</b>，请跟随您的<b>第一直觉</b>，点击页面右上角的“进入问答环节”按钮，跳转至问卷页面进行最终评分。</p>
 
 <p style="margin-top: 28px; color: #4dabff; text-align: center;">
 <b>感谢您的配合！您的认真反馈对本研究结论至关重要。</b>
@@ -252,7 +253,7 @@ elif st.session_state.page == 2:
         st.rerun()
 
     # 右上角完成按钮
-    if st.button("完成", type="primary", key="finish_btn"):
+    if st.button("进入问答环节", type="primary", key="finish_btn"):
         st.session_state.page = 3
         st.rerun()
 
@@ -265,7 +266,8 @@ elif st.session_state.page == 2:
             if msg["role"] == "user":
                 chat_html += f'<div class="bubble-user-wrap"><div class="bubble-user">{msg["content"]}</div></div>'
             else:
-                audio_b64 = base64.b64encode(msg["audio"]).decode()
+                # 核心优化 2：渲染时直接拿算好的 base64 字符串，彻底解放渲染性能
+                audio_b64 = msg.get("audio_b64", "")
                 chat_html += f'''
                 <div class="bubble-ai-wrap">
                     <div class="ai-dot">🎙️</div>
@@ -296,11 +298,17 @@ elif st.session_state.page == 2:
         try:
             with st.spinner("读取语音中..."):
                 time.sleep(1)  # 添加稍微的停顿，保持原有的交互节奏
+
                 with open(audio_path, "rb") as f:
                     audio_bytes = f.read()
 
+                # 核心优化 2：在读取文件时就直接计算 Base64 编码，并存入 session_state
+                audio_b64 = base64.b64encode(audio_bytes).decode()
+
                 st.session_state.messages.append({
-                    "role": "assistant", "content": answer, "audio": audio_bytes
+                    "role": "assistant",
+                    "content": answer,
+                    "audio_b64": audio_b64  # 存入提前算好的结果
                 })
                 st.rerun()
         except Exception as e:
@@ -313,7 +321,7 @@ elif st.session_state.page == 3:
         <div style="text-align:center; padding-top:40px;">
             <p style="font-size:18px; color:white; font-weight:bold;">实验交互已完成</p>
             <p style="margin:20px 0; color:#c0d8ff;">请点击下方链接进入问卷调查平台：</p>
-            <a href="https://v.wjx.cn/vm/mlfbsK2.aspx# " target="_blank" 
+            <a href="https://v.wjx.cn/vm/tJMnW5F.aspx# " target="_blank" 
                style="display:inline-block; background:#1941c8; color:white; padding:12px 30px; 
                       text-decoration:none; border-radius:8px; font-weight:bold;">
                进入问卷星填写评分
