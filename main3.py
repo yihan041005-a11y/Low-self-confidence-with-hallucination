@@ -296,9 +296,7 @@ elif st.session_state.page == 2:
         audio_path = AUDIO_MAPPING[long_question]
 
         try:
-            with st.spinner("读取语音中..."):
-                time.sleep(1)  # 添加稍微的停顿，保持原有的交互节奏
-
+            with st.spinner("加载回答中..."):
                 with open(audio_path, "rb") as f:
                     audio_bytes = f.read()
 
